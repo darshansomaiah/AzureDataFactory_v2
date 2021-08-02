@@ -1,0 +1,103 @@
+{
+	"name": "Until Getmetadata demo",
+	"properties": {
+		"activities": [
+			{
+				"name": "Until File Exist",
+				"type": "Until",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@variables('FileExist')",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Get Metadata Country",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "DS_Blob_Country",
+									"type": "DatasetReference"
+								},
+								"fieldList": [
+									"exists"
+								],
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							}
+						},
+						{
+							"name": "If Condition File Exists",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "Get Metadata Country",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@activity('Get Metadata Country').output.exists",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "Wait",
+										"type": "Wait",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"waitTimeInSeconds": 30
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "Set variable File Exist True",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "FileExist",
+											"value": true
+										}
+									}
+								]
+							}
+						}
+					],
+					"timeout": "7.00:00:00"
+				}
+			}
+		],
+		"variables": {
+			"FileExist": {
+				"type": "Boolean",
+				"defaultValue": false
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-07-25T12:49:54Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

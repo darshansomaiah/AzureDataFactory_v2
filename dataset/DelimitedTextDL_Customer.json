@@ -1,0 +1,24 @@
+{
+	"name": "DelimitedTextDL_Customer",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage_LS",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "Customer.csv",
+				"fileSystem": "output"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

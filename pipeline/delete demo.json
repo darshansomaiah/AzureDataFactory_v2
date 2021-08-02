@@ -1,0 +1,43 @@
+{
+	"name": "delete demo",
+	"properties": {
+		"activities": [
+			{
+				"name": "Delete CSV File 1",
+				"type": "Delete",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "DS_CSV_file_1",
+						"type": "DatasetReference"
+					},
+					"logStorageSettings": {
+						"linkedServiceName": {
+							"referenceName": "AzureDataLakeStorage_LS",
+							"type": "LinkedServiceReference"
+						},
+						"path": "demo/Folder1/Log"
+					},
+					"enableLogging": true,
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"wildcardFileName": "*.csv",
+						"enablePartitionDiscovery": false
+					}
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2021-07-25T06:22:39Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,34 @@
+{
+	"name": "Until demo",
+	"properties": {
+		"activities": [
+			{
+				"name": "Until Time",
+				"type": "Until",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(utcnow(),'2021-07-25T12:35:00.100')",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Wait",
+							"type": "Wait",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": 5
+							}
+						}
+					],
+					"timeout": "7.00:00:00"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2021-07-25T12:31:34Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

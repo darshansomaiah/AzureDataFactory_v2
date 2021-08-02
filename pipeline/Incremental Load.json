@@ -1,0 +1,162 @@
+{
+	"name": "Incremental Load",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Max Modified Date Process Table",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "Select max([Last_m]) as Last_m\nfrom tbluser",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_AzureSqlTable_Source",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Last Updated Date Control Table",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "select [LastLoadDate] as LastLoadDate\nfrom tblControl",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_AzureSqlTable_Control",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Copy new data",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Get Max Modified Date Process Table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Last Updated Date Control Table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "@concat('select * from tbluser where Last_m <=','''',activity('Get Max Modified Date Process Table').output.firstRow.Last_m,'''',' and\nLast_m > ','''',activity('Last Updated Date Control Table').output.firstRow.LastLoadDate,'''')",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert"
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_AzureSqlTable_Source",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "LS_AzureSqlTable_Destination",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Update Control Table",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy new data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[dbo].[SPUpdateLoadInfo]",
+					"storedProcedureParameters": {
+						"ModifiedDate": {
+							"value": {
+								"value": "@activity('Get Max Modified Date Process Table').output.firstRow.Last_m",
+								"type": "Expression"
+							},
+							"type": "DateTime"
+						},
+						"TableName": {
+							"value": "tbluser",
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AzureSqlDatabase_1",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2021-08-02T04:13:31Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

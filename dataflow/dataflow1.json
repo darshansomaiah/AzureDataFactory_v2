@@ -26,14 +26,27 @@
 						"type": "DatasetReference"
 					},
 					"name": "sinkData"
+				},
+				{
+					"dataset": {
+						"referenceName": "LS_AzureSqlTable_Destination",
+						"type": "DatasetReference"
+					},
+					"name": "sinkData2"
 				}
 			],
 			"transformations": [
 				{
 					"name": "Existsornot1"
+				},
+				{
+					"name": "ExistsorNot"
+				},
+				{
+					"name": "AlterRowData"
 				}
 			],
-			"script": "source(output(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> sourceData\nsource(output(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> DestinationData\nsourceData, DestinationData exists(sourceData@Key == DestinationData@Key,\n\tnegate:true,\n\tbroadcast: 'auto')~> Existsornot1\nExistsornot1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> sinkData"
+			"script": "source(output(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> sourceData\nsource(output(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> DestinationData\nsourceData, DestinationData exists(sourceData@Key == DestinationData@Key,\n\tnegate:true,\n\tbroadcast: 'auto')~> Existsornot1\nsourceData, DestinationData exists(sourceData@Key == DestinationData@Key,\n\tnegate:false,\n\tbroadcast: 'auto')~> ExistsorNot\nExistsorNot alterRow(upsertIf(true())) ~> AlterRowData\nExistsornot1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> sinkData\nAlterRowData sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:true,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tKey,\n\t\tName,\n\t\tPhone,\n\t\tLast_m\n\t)) ~> sinkData2"
 		}
 	}
 }

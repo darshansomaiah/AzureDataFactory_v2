@@ -1,0 +1,24 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_AzureSqlTable_Source",
+						"type": "DatasetReference"
+					},
+					"name": "sourceData"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "Exists1"
+				}
+			],
+			"script": "source(output(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> sourceData\nsourceData exists(ERROR_FUNCTION('') == ERROR_FUNCTION(''),\n\tnegate:false,\n\tbroadcast: 'auto')~> Exists1"
+		}
+	}
+}

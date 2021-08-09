@@ -1,0 +1,108 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adf2ccd"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/SCD Demo')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "SCD Type1",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "1.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "dataflow SCD Type 1",
+								"type": "DataFlowReference"
+							},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/dataflow SCD Type 1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow SCD Type 1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_AzureSqlTable_Source",
+								"type": "DatasetReference"
+							},
+							"name": "sourceData"
+						},
+						{
+							"dataset": {
+								"referenceName": "LS_AzureSqlTable_Destination",
+								"type": "DatasetReference"
+							},
+							"name": "DestinationData"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "LS_AzureSqlTable_Destination",
+								"type": "DatasetReference"
+							},
+							"name": "sinkData"
+						},
+						{
+							"dataset": {
+								"referenceName": "LS_AzureSqlTable_Destination",
+								"type": "DatasetReference"
+							},
+							"name": "sinkData2"
+						}
+					],
+					"transformations": [
+						{
+							"name": "Existsornot1"
+						},
+						{
+							"name": "ExistsorNot"
+						},
+						{
+							"name": "AlterRowData"
+						}
+					],
+					"script": "source(output(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> sourceData\nsource(output(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> DestinationData\nsourceData, DestinationData exists(sourceData@Key == DestinationData@Key,\n\tnegate:true,\n\tbroadcast: 'auto')~> Existsornot1\nsourceData, DestinationData exists(sourceData@Key == DestinationData@Key,\n\tnegate:false,\n\tbroadcast: 'auto')~> ExistsorNot\nExistsorNot alterRow(upsertIf(true())) ~> AlterRowData\nExistsornot1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError') ~> sinkData\nAlterRowData sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tKey as integer,\n\t\tName as string,\n\t\tPhone as string,\n\t\tLast_m as date\n\t),\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:true,\n\tupsertable:false,\n\tkeys:['Key'],\n\tformat: 'table',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true,\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tKey,\n\t\tName,\n\t\tPhone,\n\t\tLast_m\n\t)) ~> sinkData2"
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
